@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<head lang="en">
+  <head>
+    <title>My runs, 2021</title>
+    <style type="text/css">
+      body {
+        text-align: center;
+      }
+      svg {
+        max-height: 90vh;
+        max-width: 90vw;
+      }
+    </style>
+  </head>
+  <body>
+    <script src="https://d3js.org/d3.v6.min.js"></script>
+    <script src="graph.js"></script>
+    <script type="text/javascript">
+      const main = async () => {
+        const csvUrl =
+          "https://gist.githubusercontent.com/mgwalker/de505c85d9225b3a379d2b3bc9342486/raw/4347db7720ebdc8767a5d7c69934a0c696260495/runs.csv";
+
+        const dateParser = d3.timeParse("%Y-%m-%d");
+        const csv = await d3.csv(csvUrl, (c) => ({
+          date: dateParser(c.date),
+          distance: +c.distance,
+          pace: c.time / +c.distance / 60,
+        }));
+
+        const sum = (acc, { distance }) => acc + distance;
+        const cumulative = csv.map((obj, i) => ({
+          ...obj,
+          distance: csv.slice(0, i + 1).reduce(sum, 0),
+        }));
+
+        console.log(cumulative);
+
+        const [height, width] = [300, 500];
+        const margin = { bottom: 20, left: 30, right: 0, top: 10 };
+
+        const svg = d3.create("svg").attr("viewBox", [0, 0, width, height]);
+        const graph = graphDetails(height, width, margin, cumulative);
+
+        svg.append("g").call(graph.xAxis);
+        svg.append("g").call(graph.yAxis);
+
+        svg
+          .append("path")
+          .datum(csv)
+          .attr("fill", "none")
+          .attr("stroke", "steelblue")
+          .attr("stroke-width", 1.5)
+          .attr("stroke-linejoin", "round")
+          .attr("stroke-linecap", "round")
+          .attr("d", graph.line);
+
+        svg
+          .append("path")
+          .datum(cumulative)
+          .attr("fill", "none")
+          .attr("stroke", "lightgreen")
+          .attr("stroke-width", 1.5)
+          .attr("stroke-linejoin", "round")
+          .attr("stroke-linecap", "round")
+          .attr("d", graph.line);
+
+        document.body.append(svg.node());
+      };
+
+      main();
+    </script>
+  </body>
+</head>
