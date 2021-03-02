@@ -18,7 +18,7 @@
     <script type="text/javascript">
       const main = async () => {
         const csvUrl =
-          "https://gist.githubusercontent.com/mgwalker/de505c85d9225b3a379d2b3bc9342486/raw/4347db7720ebdc8767a5d7c69934a0c696260495/runs.csv";
+          "https://gist.githubusercontent.com/mgwalker/de505c85d9225b3a379d2b3bc9342486/raw/runs.csv";
 
         const dateParser = d3.timeParse("%Y-%m-%d");
         const csv = await d3.csv(csvUrl, (c) => ({
