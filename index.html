@@ -15,6 +15,7 @@
   <body>
     <script src="https://d3js.org/d3.v6.min.js"></script>
     <script src="graph.js"></script>
+    <script src="run-data.js"></script>
     <script type="text/javascript">
       const main = async () => {
         const csvUrl =
@@ -27,13 +28,7 @@
           pace: c.time / +c.distance / 60,
         }));
 
-        const sum = (acc, { distance }) => acc + distance;
-        const cumulative = csv.map((obj, i) => ({
-          ...obj,
-          distance: csv.slice(0, i + 1).reduce(sum, 0),
-        }));
-
-        console.log(cumulative);
+        const { cumulative, individual } = RunData.process(csv);
 
         const [height, width] = [300, 500];
         const margin = { bottom: 20, left: 30, right: 0, top: 10 };
@@ -46,7 +41,7 @@
 
         svg
           .append("path")
-          .datum(csv)
+          .datum(individual)
           .attr("fill", "none")
           .attr("stroke", "steelblue")
           .attr("stroke-width", 1.5)
