@@ -4,15 +4,33 @@
     <title>My runs, 2021</title>
     <style type="text/css">
       body {
-        text-align: center;
       }
+
+      #container {
+        display: grid;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        grid-template-columns: 50vw 50vw;
+        grid-template-rows: 50vh 50vh;
+      }
+
       svg {
-        max-height: 90vh;
-        max-width: 90vw;
+        max-height: 45vh;
+        max-width: 45vw;
       }
     </style>
   </head>
   <body>
+    <div id="container">
+      <div id="stats"></div>
+      <div id="individual"></div>
+      <div id="cumulative"></div>
+      <div id="pace"></div>
+    </div>
+
     <script src="https://d3js.org/d3.v6.min.js"></script>
     <script src="graph.js"></script>
     <script src="run-data.js"></script>
@@ -25,41 +43,29 @@
         const csv = await d3.csv(csvUrl, (c) => ({
           date: dateParser(c.date),
           distance: +c.distance,
-          pace: c.time / +c.distance / 60,
+          time: +c.time,
         }));
 
-        const { cumulative, individual } = RunData.process(csv);
+        const { cumulative, individual, pace, stats } = RunData.process(csv);
+        console.log(stats);
 
-        const [height, width] = [300, 500];
-        const margin = { bottom: 20, left: 30, right: 0, top: 10 };
+        const individualGraph = makeGraph(individual);
+        const cumulativeGraph = makeGraph(cumulative, { stroke: "green" });
+        const paceGraph = makeGraph(pace, {
+          stroke: "orange",
+          yAxisLabel: "minutes per mile",
+        });
 
-        const svg = d3.create("svg").attr("viewBox", [0, 0, width, height]);
-        const graph = graphDetails(height, width, margin, cumulative);
+        document.getElementById("individual").append(individualGraph.node());
+        document.getElementById("cumulative").append(cumulativeGraph.node());
+        document.getElementById("pace").append(paceGraph.node());
 
-        svg.append("g").call(graph.xAxis);
-        svg.append("g").call(graph.yAxis);
-
-        svg
-          .append("path")
-          .datum(individual)
-          .attr("fill", "none")
-          .attr("stroke", "steelblue")
-          .attr("stroke-width", 1.5)
-          .attr("stroke-linejoin", "round")
-          .attr("stroke-linecap", "round")
-          .attr("d", graph.line);
-
-        svg
-          .append("path")
-          .datum(cumulative)
-          .attr("fill", "none")
-          .attr("stroke", "lightgreen")
-          .attr("stroke-width", 1.5)
-          .attr("stroke-linejoin", "round")
-          .attr("stroke-linecap", "round")
-          .attr("d", graph.line);
-
-        document.body.append(svg.node());
+        document.getElementById("stats").innerHTML = `
+<ul>
+  <li><strong>Total distance:</strong> ${stats.total} miles</li>
+  <li><strong>Average pace:</strong> ${stats.averagePace} minutes per mile</li>
+</ul>
+`;
       };
 
       main();

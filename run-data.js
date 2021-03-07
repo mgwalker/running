@@ -1,6 +1,10 @@
 const RunData = {
   process: (csv) => {
-    const individual = [...csv];
+    const individual = csv.map(({ date, distance, time }) => ({
+      date,
+      pace: time / distance / 60,
+      value: distance,
+    }));
 
     const start = individual[0].date;
     const end = individual[individual.length - 1].date.getTime();
@@ -16,7 +20,7 @@ const RunData = {
       if (individual[dataIndex].date.getTime() !== date) {
         individual.splice(dataIndex, 0, {
           date: new Date(start.getFullYear(), start.getMonth(), dayNumber),
-          distance: 0,
+          value: 0,
           pace: 0,
         });
       }
@@ -30,15 +34,43 @@ const RunData = {
       dataIndex += 1;
     }
 
-    const sum = (acc, { distance }) => acc + distance;
+    const sum = (acc, { value }) => acc + value;
     const cumulative = individual.map((obj, i) => ({
       ...obj,
-      distance: individual.slice(0, i + 1).reduce(sum, 0),
+      value: individual.slice(0, i + 1).reduce(sum, 0),
     }));
+
+    let previousPace = individual[0].pace;
+    const pace = individual.map(({ date, pace }) => {
+      if (pace > 0) {
+        previousPace = pace;
+      }
+
+      return {
+        date,
+        value: previousPace,
+      };
+    });
+
+    const stats = {
+      averagePace: individual
+        .filter(({ pace }) => pace > 0)
+        .map(({ pace }) => pace)
+        .reduce((sum, pace, i, all) => {
+          const newSum = sum + pace;
+          if (i === all.length - 1) {
+            return Math.round((100 * newSum) / all.length) / 100;
+          }
+          return newSum;
+        }, 0),
+      total: cumulative.slice(-1)[0].value,
+    };
 
     return {
       cumulative,
       individual,
+      pace,
+      stats,
     };
   },
 };
