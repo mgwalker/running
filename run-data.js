@@ -53,6 +53,17 @@ const RunData = {
     });
 
     const stats = {
+      averageDistance: individual
+        .filter(({ value }) => value > 0)
+        .map(({ value }) => value)
+        .reduce((sum, distance, i, all) => {
+          const newSum = sum + distance;
+          if (i === all.length - 1) {
+            return Math.round((100 * newSum) / all.length) / 100;
+          }
+          return newSum;
+        }, 0),
+
       averagePace: individual
         .filter(({ pace }) => pace > 0)
         .map(({ pace }) => pace)
@@ -65,6 +76,12 @@ const RunData = {
         }, 0),
       total: cumulative.slice(-1)[0].value,
     };
+
+    const [
+      minutes,
+      partial,
+    ] = (stats.averagePace = `${stats.averagePace}`.split("."));
+    stats.averagePace = `${minutes}:${Math.round(partial * 0.6)}`;
 
     return {
       cumulative,
