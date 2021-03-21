@@ -3,7 +3,7 @@ const makeGraph = (
   { stroke = "steelblue", yAxisLabel = "miles" } = {}
 ) => {
   const [height, width] = [300, 500];
-  const margin = { bottom: 20, left: 30, right: 0, top: 10 };
+  const margin = { bottom: 20, left: 30, right: 30, top: 10 };
 
   const svg = d3.create("svg").attr("viewBox", [0, 0, width, height]);
 
@@ -33,7 +33,6 @@ const makeGraph = (
     g
       .attr("transform", `translate(${margin.left},0)`)
       .call(d3.axisLeft(y))
-      .call((g) => g.select(".domain").remove())
       .call((g) =>
         g
           .select(".tick:last-of-type text")
@@ -42,6 +41,30 @@ const makeGraph = (
           .attr("text-anchor", "start")
           .attr("font-weight", "bold")
           .text(yAxisLabel)
+      )
+  );
+
+  // Right-side Y axis
+  svg
+    .append("g")
+    .call((g) =>
+      g
+        .attr("transform", `translate(${width - margin.right},0)`)
+        .call(d3.axisRight(y))
+    );
+
+  // Y-axis grid lines, so you can have a chance of figuring out the stuff
+  // in the middle of the graph.
+  svg.append("g").call((g) =>
+    g
+      .attr("transform", `translate(${margin.left},0)`)
+      .attr("class", "grid-line")
+      .call(
+        d3
+          .axisLeft(y)
+          .tickFormat("")
+          .ticks(8)
+          .tickSizeInner(-width + margin.left + margin.right)
       )
   );
 
