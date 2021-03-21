@@ -52,6 +52,10 @@ const RunData = {
       };
     });
 
+    const twoDecimalsFormatter = new Intl.NumberFormat("en-US", {
+      maximumFractionDigits: 2,
+    });
+
     const stats = {
       averageDistance: individual
         .filter(({ value }) => value > 0)
@@ -59,7 +63,7 @@ const RunData = {
         .reduce((sum, distance, i, all) => {
           const newSum = sum + distance;
           if (i === all.length - 1) {
-            return Math.round((100 * newSum) / all.length) / 100;
+            return twoDecimalsFormatter.format(newSum / all.length);
           }
           return newSum;
         }, 0),
@@ -70,18 +74,25 @@ const RunData = {
         .reduce((sum, pace, i, all) => {
           const newSum = sum + pace;
           if (i === all.length - 1) {
-            return Math.round((100 * newSum) / all.length) / 100;
+            return newSum / all.length;
           }
           return newSum;
         }, 0),
       total: cumulative.slice(-1)[0].value,
     };
 
+    const secondsFormatter = new Intl.NumberFormat("en-US", {
+      maximumFractionDigits: 0,
+      minimumIntegerDigits: 2,
+    });
+
     const [
       minutes,
       partial,
     ] = (stats.averagePace = `${stats.averagePace}`.split("."));
-    stats.averagePace = `${minutes}:${Math.round(partial * 0.6)}`;
+    stats.averagePace = `${minutes}:${secondsFormatter.format(
+      `0.${partial}` * 60
+    )}`;
 
     return {
       cumulative,

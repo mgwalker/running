@@ -47,7 +47,30 @@
         }));
 
         const { cumulative, individual, pace, stats } = RunData.process(csv);
-        console.log(stats);
+
+        // For individual runs, add the previous day's distance as the starting
+        // point for each day. Basically we end up with two values for each
+        // day - start and end, where start is the previous day's distance. This
+        // produces a nice little square line chart.
+        for (let i = 1; i < individual.length; i++) {
+          individual.splice(i, 0, {
+            ...individual[i],
+            value: individual[i - 1].value,
+          });
+          i += 1;
+        }
+
+        // For the last run, go ahead and push on the next day's "start" value,
+        // so it's not just a vertical line but it also has a hat.
+        individual.push({
+          date: new Date(
+            individual[individual.length - 1].date.getFullYear(),
+            individual[individual.length - 1].date.getMonth(),
+            individual[individual.length - 1].date.getDate() + 1
+          ),
+
+          value: individual[individual.length - 1].value,
+        });
 
         const individualGraph = makeGraph(individual);
         const cumulativeGraph = makeGraph(cumulative, { stroke: "green" });
