@@ -3,6 +3,12 @@
   <head>
     <title>My runs, 2021</title>
     <style type="text/css">
+      @import url("https://fonts.googleapis.com/css2?family=Public+Sans:wght@100;700&display=swap");
+
+      body {
+        font-family: "Public Sans", sans-serif;
+      }
+
       #container {
         display: grid;
         position: fixed;
@@ -12,6 +18,19 @@
         height: 100vh;
         grid-template-columns: 50vw 50vw;
         grid-template-rows: 50vh 50vh;
+      }
+
+      #container > * {
+        padding: 5px;
+      }
+
+      #stats table {
+        margin: 0 auto;
+      }
+
+      #stats table th {
+        padding-right: 5px;
+        text-align: right;
       }
 
       svg {
@@ -26,7 +45,24 @@
   </head>
   <body>
     <div id="container">
-      <div id="stats"></div>
+      <div id="stats">
+        <table>
+          <tbody>
+            <tr>
+              <th>Total distance:</th>
+              <td id="stats-total-distance"></td>
+            </tr>
+            <tr>
+              <th>Average distance:</th>
+              <td id="stats-average-distance"></td>
+            </tr>
+            <tr>
+              <th>Average pace:</th>
+              <td id="stats-average-pace"></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
       <div id="individual"></div>
       <div id="cumulative"></div>
       <div id="pace"></div>
@@ -91,13 +127,15 @@
         document.getElementById("cumulative").append(cumulativeGraph.node());
         document.getElementById("pace").append(paceGraph.node());
 
-        document.getElementById("stats").innerHTML = `
-<ul>
-  <li><strong>Total distance:</strong> ${stats.total} miles</li>
-  <li><strong>Average distance:</strong> ${stats.averageDistance} miles per run</li>
-  <li><strong>Average pace:</strong> ${stats.averagePace} minutes per mile</li>
-</ul>
-`;
+        document.getElementById(
+          "stats-total-distance"
+        ).innerText = `${stats.total} miles`;
+        document.getElementById(
+          "stats-average-distance"
+        ).innerText = `${stats.averageDistance} miles per run`;
+        document.getElementById(
+          "stats-average-pace"
+        ).innerText = `${stats.averagePace} minutes per miles`;
       };
 
       main();
