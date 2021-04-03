@@ -96,7 +96,14 @@ const RunData = {
           }
           return newSum;
         }, 0),
+
       total: cumulative.slice(-1)[0].value,
+
+      totalTime:
+        individual
+          .filter(({ pace }) => pace > 0)
+          .map(({ pace }) => pace)
+          .reduce((sum, pace) => sum + pace, 0) / 60,
     };
 
     const secondsFormatter = new Intl.NumberFormat("en-US", {
@@ -104,13 +111,20 @@ const RunData = {
       minimumIntegerDigits: 2,
     });
 
-    const [
-      minutes,
-      partial,
-    ] = (stats.averagePace = `${stats.averagePace}`.split("."));
-    stats.averagePace = `${minutes}:${secondsFormatter.format(
-      `0.${partial}` * 60
-    )}`;
+    {
+      const [minutes, minPartial] = `${stats.averagePace}`.split(".");
+      const seconds = `0.${minPartial}` * 60;
+      stats.averagePace = `${minutes}:${secondsFormatter.format(seconds)}`;
+    }
+
+    {
+      const [hours, hourPartial] = `${stats.totalTime}`.split(".");
+      const [minutes, minPartial] = `${`0.${hourPartial}` * 60}`.split(".");
+      const seconds = `0.${minPartial}` * 60;
+      stats.totalTime = `${hours} hours, ${minutes} minutes, ${secondsFormatter.format(
+        seconds
+      )} seconds`;
+    }
 
     return {
       cumulative,

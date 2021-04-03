@@ -53,6 +53,10 @@
               <td id="stats-total-distance"></td>
             </tr>
             <tr>
+              <th>Total time:</th>
+              <td id="stats-total-time"></td>
+            </tr>
+            <tr>
               <th>Average distance:</th>
               <td id="stats-average-distance"></td>
             </tr>
@@ -131,11 +135,14 @@
           "stats-total-distance"
         ).innerText = `${stats.total} miles`;
         document.getElementById(
+          "stats-total-time"
+        ).innerText = `${stats.totalTime}`;
+        document.getElementById(
           "stats-average-distance"
         ).innerText = `${stats.averageDistance} miles per run`;
         document.getElementById(
           "stats-average-pace"
-        ).innerText = `${stats.averagePace} minutes per miles`;
+        ).innerText = `${stats.averagePace} per mile`;
       };
 
       main();
