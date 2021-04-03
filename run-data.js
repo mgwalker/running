@@ -99,11 +99,9 @@ const RunData = {
 
       total: cumulative.slice(-1)[0].value,
 
-      totalTime:
-        individual
-          .filter(({ pace }) => pace > 0)
-          .map(({ pace }) => pace)
-          .reduce((sum, pace) => sum + pace, 0) / 60,
+      totalRuns: csv.length,
+
+      totalTime: csv.reduce((sum, { time }) => sum + time, 0),
     };
 
     const secondsFormatter = new Intl.NumberFormat("en-US", {
@@ -118,7 +116,7 @@ const RunData = {
     }
 
     {
-      const [hours, hourPartial] = `${stats.totalTime}`.split(".");
+      const [hours, hourPartial] = `${stats.totalTime / 3600}`.split(".");
       const [minutes, minPartial] = `${`0.${hourPartial}` * 60}`.split(".");
       const seconds = `0.${minPartial}` * 60;
       stats.totalTime = `${hours} hours, ${minutes} minutes, ${secondsFormatter.format(
