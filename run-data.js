@@ -34,31 +34,12 @@ const RunData = {
       dataIndex += 1;
     }
 
-    // Now add zeroes for all the days between the last run and today.
-    const now = new Date(
-      new Date().getFullYear(),
-      new Date().getMonth(),
-      new Date().getDate()
-    ).getTime();
-
-    while (date !== now) {
-      dayNumber += 1;
-      date = new Date(
-        start.getFullYear(),
-        start.getMonth(),
-        dayNumber
-      ).getTime();
-
-      individual.push({ date: new Date(date), value: 0, pace: 0 });
-    }
-
     const sum = (acc, { value }) => acc + value;
     const cumulative = individual.map((obj, i) => ({
       ...obj,
       value: individual.slice(0, i + 1).reduce(sum, 0),
     }));
 
-    let previousPace = individual[0].pace;
     const pace = individual.map(({ date, pace }) => {
       if (pace > 0) {
         previousPace = pace;
@@ -66,7 +47,7 @@ const RunData = {
 
       return {
         date,
-        value: previousPace,
+        value: pace,
       };
     });
 

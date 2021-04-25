@@ -8,8 +8,8 @@ const makeGraph = (
   const svg = d3.create("svg").attr("viewBox", [0, 0, width, height]);
 
   const x = d3
-    .scaleUtc()
-    .domain(d3.extent(data, ({ date }) => date))
+    .scaleBand()
+    .domain(data.map(({ date }) => date))
     .range([margin.left, width - margin.right]);
 
   const y = d3
@@ -19,14 +19,16 @@ const makeGraph = (
     .range([height - margin.bottom, margin.top]);
 
   // X axis
-  svg.append("g").call((g) =>
-    g.attr("transform", `translate(0,${height - margin.bottom})`).call(
+  svg.append("g").call((g) => {
+    g.attr("transform", `translate(0,${height - margin.bottom})`);
+    g.call(
       d3
         .axisBottom(x)
-        .ticks(width / 80)
         .tickSizeOuter(0)
-    )
-  );
+        .tickFormat(d3.timeFormat("%b"))
+        .tickValues(x.domain().filter((date) => date.getDate() === 1))
+    );
+  });
 
   // Y axis
   svg.append("g").call((g) =>
@@ -68,21 +70,20 @@ const makeGraph = (
       )
   );
 
-  const line = d3
-    .line()
-    .defined(({ value }) => !isNaN(value))
-    .x(({ date }) => x(date))
-    .y(({ value }) => y(value));
+  const barWidth = x.bandwidth() * 0.7;
+  const barXOffset = (x.bandwidth() - barWidth) / 2.0;
 
   svg
-    .append("path")
-    .datum(data)
-    .attr("fill", "none")
-    .attr("stroke", stroke)
-    .attr("stroke-width", 1.5)
-    .attr("stroke-linejoin", "round")
-    .attr("stroke-linecap", "round")
-    .attr("d", line);
+    .append("g")
+    .selectAll(".bar")
+    .data(data)
+    .enter()
+    .append("rect")
+    .attr("x", ({ date }) => x(date) + barXOffset)
+    .attr("y", ({ value }) => y(value))
+    .attr("width", barWidth)
+    .attr("height", ({ value }) => height - y(value) - margin.bottom)
+    .attr("fill", stroke);
 
   return svg;
 };

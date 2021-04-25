@@ -80,33 +80,6 @@
     <script src="graph.js"></script>
     <script src="run-data.js"></script>
     <script type="text/javascript">
-      const square = (data) => {
-        // For each day, add the previous day's value as the starting point.
-        // Basically we end up with two values for each day - start and end,
-        // where start is the previous day's value. This produces a nice little
-        // square line chart.
-        for (let i = 1; i < data.length; i++) {
-          data.splice(i, 0, {
-            ...data[i],
-            value: data[i - 1].value,
-          });
-          i += 1;
-        }
-
-        // For the last day, go ahead and push on the next day's "start" value,
-        // so it's not just a vertical line but it also has a hat.
-        const last = data[data.length - 1];
-        data.push({
-          date: new Date(
-            last.date.getFullYear(),
-            last.date.getMonth(),
-            last.date.getDate() + 1
-          ),
-
-          value: last.value,
-        });
-      };
-
       const main = async () => {
         const csvUrl =
           "https://gist.githubusercontent.com/mgwalker/de505c85d9225b3a379d2b3bc9342486/raw/runs.csv";
@@ -119,10 +92,6 @@
         }));
 
         const { cumulative, individual, pace, stats } = RunData.process(csv);
-
-        square(individual);
-        square(cumulative);
-        square(pace);
 
         const individualGraph = makeGraph(individual);
         const cumulativeGraph = makeGraph(cumulative, { stroke: "green" });
