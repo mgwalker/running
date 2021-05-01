@@ -76,52 +76,6 @@
       <div id="pace"></div>
     </div>
 
-    <script src="https://d3js.org/d3.v6.min.js"></script>
-    <script src="graph.js"></script>
-    <script src="run-data.js"></script>
-    <script type="text/javascript">
-      const main = async () => {
-        const csvUrl =
-          "https://gist.githubusercontent.com/mgwalker/de505c85d9225b3a379d2b3bc9342486/raw/runs.csv";
-
-        const dateParser = d3.timeParse("%Y-%m-%d");
-        const csv = await d3.csv(csvUrl, (c) => ({
-          date: dateParser(c.date),
-          distance: +c.distance,
-          time: +c.time,
-        }));
-
-        const { cumulative, individual, pace, stats } = RunData.process(csv);
-
-        const individualGraph = makeGraph(individual);
-        const cumulativeGraph = makeGraph(cumulative, { stroke: "green" });
-        const paceGraph = makeGraph(pace, {
-          stroke: "orange",
-          yAxisLabel: "minutes per mile",
-        });
-
-        document.getElementById("individual").append(individualGraph.node());
-        document.getElementById("cumulative").append(cumulativeGraph.node());
-        document.getElementById("pace").append(paceGraph.node());
-
-        document.getElementById(
-          "stats-total-distance"
-        ).innerText = `${stats.total} miles`;
-        document.getElementById(
-          "stats-total-runs"
-        ).innerText = `${stats.totalRuns}`;
-        document.getElementById(
-          "stats-total-time"
-        ).innerText = `${stats.totalTime}`;
-        document.getElementById(
-          "stats-average-distance"
-        ).innerText = `${stats.averageDistance} miles per run`;
-        document.getElementById(
-          "stats-average-pace"
-        ).innerText = `${stats.averagePace} per mile`;
-      };
-
-      main();
-    </script>
+    <script type="module" src="index.js"></script>
   </body>
 </head>

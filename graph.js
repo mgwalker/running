@@ -1,10 +1,12 @@
-const makeGraph = (
+const graph = (
   data,
-  { stroke = "steelblue", yAxisLabel = "miles" } = {}
+  {
+    height = 300,
+    margin = { bottom: 20, left: 30, right: 30, top: 10 },
+    width = 500,
+    yAxisLabel = "",
+  } = {}
 ) => {
-  const [height, width] = [300, 500];
-  const margin = { bottom: 20, left: 30, right: 30, top: 10 };
-
   const svg = d3.create("svg").attr("viewBox", [0, 0, width, height]);
 
   const x = d3
@@ -70,20 +72,57 @@ const makeGraph = (
       )
   );
 
-  const barWidth = x.bandwidth() * 0.7;
-  const barXOffset = (x.bandwidth() - barWidth) / 2.0;
+  const self = {
+    append: (selector) => {
+      document.querySelector(selector)?.append(svg.node());
+      return self;
+    },
 
-  svg
-    .append("g")
-    .selectAll(".bar")
-    .data(data)
-    .enter()
-    .append("rect")
-    .attr("x", ({ date }) => x(date) + barXOffset)
-    .attr("y", ({ value }) => y(value))
-    .attr("width", barWidth)
-    .attr("height", ({ value }) => height - y(value) - margin.bottom)
-    .attr("fill", stroke);
+    addBar: (barData = null, { fill = "steelblue" } = {}) => {
+      const d = barData ?? data;
 
-  return svg;
+      const barWidth = x.bandwidth() * 0.7;
+      const barXOffset = (x.bandwidth() - barWidth) / 2.0;
+
+      svg
+        .append("g")
+        .selectAll(".bar")
+        .data(d)
+        .enter()
+        .append("rect")
+        .attr("x", ({ date }) => x(date) + barXOffset)
+        .attr("y", ({ value }) => y(value))
+        .attr("width", barWidth)
+        .attr("height", ({ value }) => height - y(value) - margin.bottom)
+        .attr("fill", fill);
+
+      return self;
+    },
+
+    addLine: (lineData = null, { stroke = "steelblue" } = {}) => {
+      const d = lineData ?? data;
+
+      const line = d3
+        .line()
+        .defined(({ value }) => !isNaN(value))
+        .x(({ date }) => x(date))
+        .y(({ value }) => y(value));
+
+      svg
+        .append("path")
+        .datum(d)
+        .attr("fill", "none")
+        .attr("stroke", stroke)
+        .attr("stroke-width", 1.5)
+        .attr("stroke-linejoin", "round")
+        .attr("stroke-linecap", "round")
+        .attr("d", line);
+
+      return self;
+    },
+  };
+
+  return self;
 };
+
+export { graph };
