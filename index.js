@@ -70,7 +70,36 @@ const main = async () => {
 
   const { cumulative: c2020 } = process(csv2020);
 
-  graph(i2021, { yAxisLabel: "miles" }).addBar().append("#individual");
+  const tooltip = document.getElementById("tooltip");
+  const twoDecimalsFormatter = new Intl.NumberFormat("en-US", {
+    maximumFractionDigits: 2,
+  });
+
+  graph(i2021, { yAxisLabel: "miles" })
+    .addBar(null, {
+      onMouseOut: () => {
+        tooltip.style.visibility = "";
+      },
+      onMouseOver: ({ clientX, clientY }, { date, distance, pace }) => {
+        tooltip.style.visibility = "visible";
+        tooltip.style.top = `${clientY}px`;
+
+        if (clientX > window.innerWidth * 0.8) {
+          tooltip.style.left = "auto";
+          tooltip.style.right = `${window.innerWidth - clientX}px`;
+        } else {
+          tooltip.style.left = `${clientX}px`;
+          tooltip.style.right = "auto";
+        }
+
+        tooltip.innerHTML = `
+  <h2>${date.toDateString()}</h2>
+  ${distance} miles<br/>
+  ${twoDecimalsFormatter.format(pace)} minutes/mile<br/>
+  ${twoDecimalsFormatter.format(60 / pace)} mph`;
+      },
+    })
+    .append("#individual");
 
   graph(c2020, { yAxisLabel: "miles" })
     .addBar(c2021, { fill: "#377D22" })

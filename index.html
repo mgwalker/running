@@ -9,6 +9,20 @@
         font-family: "Public Sans", sans-serif;
       }
 
+      #tooltip {
+        border: 2px solid black;
+        padding: 5px;
+        position: absolute;
+        background: lightblue;
+        visibility: hidden;
+        z-index: 10;
+      }
+
+      #tooltip h2 {
+        margin-top: 0;
+        padding-top: 0;
+      }
+
       #container {
         display: grid;
         position: fixed;
@@ -44,6 +58,8 @@
     </style>
   </head>
   <body>
+    <div id="tooltip"><h2>hi</h2></div>
+
     <div id="container">
       <div id="stats">
         <table>

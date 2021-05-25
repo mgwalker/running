@@ -78,13 +78,16 @@ const graph = (
       return self;
     },
 
-    addBar: (barData = null, { fill = "steelblue" } = {}) => {
+    addBar: (
+      barData = null,
+      { fill = "steelblue", onMouseOut = null, onMouseOver = null } = {}
+    ) => {
       const d = barData ?? data;
 
       const barWidth = x.bandwidth() * 0.7;
       const barXOffset = (x.bandwidth() - barWidth) / 2.0;
 
-      svg
+      const el = svg
         .append("g")
         .selectAll(".bar")
         .data(d)
@@ -95,6 +98,19 @@ const graph = (
         .attr("width", barWidth)
         .attr("height", ({ value }) => height - y(value) - margin.bottom)
         .attr("fill", fill);
+
+      if (typeof onMouseOut === "function") {
+        el.on("mouseout", onMouseOut);
+      }
+
+      if (typeof onMouseOver === "function") {
+        el.on(
+          "mouseover",
+          ({ clientX, clientY }, { date, value: distance, pace }) => {
+            onMouseOver({ clientX, clientY }, { date, distance, pace });
+          }
+        );
+      }
 
       return self;
     },
