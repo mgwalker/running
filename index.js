@@ -101,7 +101,19 @@ const main = async () => {
     })
     .append("#individual");
 
-  graph(c2020, { yAxisLabel: "miles" })
+  // The base object needs to be at least as large as the largest data used for
+  // the graphs. So it needs to span the full length of dates. We also want to
+  // capture the full range of Y values, since the base object is used to set
+  // the graph scale. This object satisfies both of those objectives: covers the
+  // full length of dates (X axis) and maximum total miles (Y axis).
+  const cumulativeRange = (c2020.length > c2021.length ? c2020 : c2021).map(
+    ({ date }, i) => ({
+      date,
+      value: Math.max(c2020?.[i]?.value, c2021?.[i]?.value),
+    })
+  );
+
+  graph(cumulativeRange, { yAxisLabel: "miles" })
     .addBar(c2021, { fill: "#377D22" })
     .addBar(c2020, { fill: "#4A0400" })
     .append("#cumulative");
