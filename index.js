@@ -1,13 +1,15 @@
-import "https://d3js.org/d3.v6.min.js";
-import { graph } from "./graph.js";
-import { process } from "./run-data.js";
+import { chart, csv, text } from "./util.js";
+import {
+  fillHoles,
+  getCumulative,
+  getIndividual,
+  getPace,
+  getStats,
+} from "./run-data.js";
 
-const text = (selector, txt) => {
-  const e = document.querySelector(selector);
-  if (e) {
-    e.innerText = txt;
-  }
-};
+const twoDecimalsFormatter = new Intl.NumberFormat("en-US", {
+  maximumFractionDigits: 2,
+});
 
 const root =
   "https://gist.githubusercontent.com/mgwalker/de505c85d9225b3a379d2b3bc9342486/raw/";
@@ -18,115 +20,127 @@ const urls = {
 };
 
 const main = async () => {
-  const dateParser = d3.timeParse("%Y-%m-%d");
-
-  const csv2021 = await d3.csv(urls.y2021, (c) => ({
-    date: dateParser(c.date),
-    distance: +c.distance,
-    time: +c.time,
+  const csv2021 = await csv(urls.y2021);
+  const csv2020 = (await csv(urls.y2020)).map((row) => ({
+    ...row,
+    date: row.date.replace(/^2020-/, "2021-"),
   }));
 
-  const csv2020 = await d3.csv(urls.y2020, (c) => {
-    const date = dateParser(c.date);
-    date.setFullYear(2021);
+  fillHoles(csv2021);
+  fillHoles(csv2020);
 
-    return {
-      date,
-      distance: +c.distance,
-      time: +c.time,
-    };
-  });
+  const i2021 = getIndividual(csv2021);
+  const p2021 = getPace(csv2021);
 
-  const {
-    cumulative: c2021,
-    individual: i2021,
-    pace: p2021,
-    stats: s2021,
-  } = process(csv2021);
+  const s2021 = getStats(csv2021);
 
-  // If the current year's runs started before last year's runs,
-  // pad last year's data with zeroes at the start so the graph
-  // works.
-  while (csv2021[0].date < csv2020[0].date) {
-    const date = new Date(csv2020[0].date);
-    date.setDate(-1);
-    csv2020.unshift({
-      date,
+  let fromDate = luxon.DateTime.fromISO(csv2021[0].date);
+  let toDate = luxon.DateTime.fromISO(csv2020[0].date);
+  let dataSetToExtend = csv2020;
+  if (fromDate > toDate) {
+    fromDate = luxon.DateTime.fromISO(csv2020[0].date);
+    toDate = luxon.DateTime.fromISO(csv2021[0].date);
+    dataSetToExtend = csv2021;
+  }
+
+  while (toDate > fromDate) {
+    toDate = toDate.minus({ days: 1 });
+    dataSetToExtend.unshift({
+      date: toDate.toISODate(),
       distance: 0,
       time: 0,
     });
   }
 
-  // Likewise for the end.
-  while (csv2021.slice(-1)[0].date > csv2020.slice(-1)[0].date) {
-    const date = new Date(csv2020.slice(-1)[0].date);
-    date.setDate(-1);
-    csv2020.unshift({
-      date,
+  fromDate = luxon.DateTime.fromISO(csv2021.slice(-1)[0].date);
+  toDate = luxon.DateTime.fromISO(csv2020.slice(-1)[0].date);
+  dataSetToExtend = csv2021;
+
+  if (fromDate > toDate) {
+    fromDate = luxon.DateTime.fromISO(csv2020.slice(-1)[0].date);
+    toDate = luxon.DateTime.fromISO(csv2021.slice(-1)[0].date);
+    dataSetToExtend = csv2020;
+  }
+
+  while (fromDate < toDate) {
+    fromDate = fromDate.plus({ days: 1 });
+    dataSetToExtend.push({
+      date: fromDate.toISODate(),
       distance: 0,
       time: 0,
     });
   }
 
-  const { cumulative: c2020 } = process(csv2020);
+  const c2021 = getCumulative(csv2021);
+  const c2020 = getCumulative(csv2020);
 
-  const tooltip = document.getElementById("tooltip");
-  const twoDecimalsFormatter = new Intl.NumberFormat("en-US", {
-    maximumFractionDigits: 2,
+  chart({
+    id: "individual",
+    datasets: [
+      {
+        backgroundColor: "steelblue",
+        borderColor: "steelblue",
+        borderWidth: 5,
+        data: i2021,
+      },
+    ],
+    tooltip: {
+      label(index) {
+        return ` ${i2021[index].value} miles`;
+      },
+      title(index) {
+        return i2021[index].date;
+      },
+    },
   });
 
-  graph(i2021, { yAxisLabel: "miles" })
-    .addBar(null, {
-      onMouseOut: () => {
-        tooltip.style.visibility = "";
+  chart({
+    id: "cumulative",
+    type: "line",
+    datasets: [
+      {
+        data: c2021,
+        backgroundColor: "rgba(55,124,34,0.3)",
+        borderColor: "#377D22",
+        borderWidth: 2,
+        fill: "start",
+        pointRadius: 0,
       },
-      onMouseOver: ({ clientX, clientY }, { date, distance, pace }) => {
-        tooltip.style.visibility = "visible";
-        tooltip.style.top = `${clientY}px`;
-
-        if (clientX > window.innerWidth * 0.8) {
-          tooltip.style.left = "auto";
-          tooltip.style.right = `${window.innerWidth - clientX}px`;
-        } else {
-          tooltip.style.left = `${clientX}px`;
-          tooltip.style.right = "auto";
-        }
-
-        tooltip.innerHTML = `
-  <h2>${date.toDateString()}</h2>
-  ${distance} miles<br/>
-  ${twoDecimalsFormatter.format(pace)} minutes/mile<br/>
-  ${twoDecimalsFormatter.format(60 / pace)} mph`;
+      {
+        data: c2020,
+        backgroundColor: "rgba(74,4,0,0.3)",
+        borderColor: "#4A 04 00",
+        borderWidth: 2,
+        fill: "start",
+        pointRadius: 0,
       },
-    })
-    .append("#individual");
+    ],
+  });
 
-  // The base object needs to be at least as large as the largest data used for
-  // the graphs. So it needs to span the full length of dates. We also want to
-  // capture the full range of Y values, since the base object is used to set
-  // the graph scale. This object satisfies both of those objectives: covers the
-  // full length of dates (X axis) and maximum total miles (Y axis).
-  const cumulativeRange = (c2020.length > c2021.length ? c2020 : c2021).map(
-    ({ date }, i) => ({
-      date,
-      value: Math.max(c2020?.[i]?.value, c2021?.[i]?.value),
-    })
-  );
-
-  graph(cumulativeRange, { yAxisLabel: "miles" })
-    .addBar(c2021, { fill: "#377D22" })
-    .addBar(c2020, { fill: "#4A0400" })
-    .append("#cumulative");
-
-  graph(p2021, { yAxisLabel: "minutes per mile" })
-    .addBar(null, { fill: "orange" })
-    .append("#pace");
+  chart({
+    id: "pace",
+    datasets: [
+      {
+        backgroundColor: "orange",
+        borderColor: "orange",
+        borderWidth: 5,
+        data: p2021,
+      },
+    ],
+    tooltip: {
+      label: (index) =>
+        ` ${twoDecimalsFormatter.format(p2021[index].value)} minutes per mile`,
+      title: (index) => p2021[index].date,
+    },
+  });
 
   text("#stats-total-distance", `${s2021.total} miles`);
   text("#stats-total-runs", `${s2021.totalRuns}`);
   text("#stats-total-time", `${s2021.totalTime}`);
   text("#stats-average-distance", `${s2021.averageDistance} miles per run`);
   text("#stats-average-pace", `${s2021.averagePace} per mile`);
+
+  return;
 };
 
 main();

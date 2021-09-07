@@ -47,6 +47,10 @@
         text-align: right;
       }
 
+      canvas {
+        height: 90%;
+        width: 90%;
+
       svg {
         max-height: 45vh;
         max-width: 45vw;
@@ -87,11 +91,23 @@
           </tbody>
         </table>
       </div>
-      <div id="individual"></div>
-      <div id="cumulative"></div>
-      <div id="pace"></div>
+      <div id="individual"><canvas></canvas></div>
+      <div id="cumulative"><canvas></canvas></div>
+      <div id="pace"><canvas></canvas></div>
     </div>
 
+    <script
+      type="text/javascript"
+      src="https://cdn.jsdelivr.net/npm/chart.js@3.5.1"
+    ></script>
+    <script
+      type="text/javascript"
+      src="https://cdn.jsdelivr.net/npm/luxon@2.0.2"
+    ></script>
+    <script
+      type="text/javascript"
+      src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@1.1.0"
+    ></script>
     <script type="module" src="index.js"></script>
   </body>
 </head>
