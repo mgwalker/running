@@ -1,4 +1,4 @@
-const formatPace = (sec) => {
+export const formatPace = (sec) => {
   const [minutes, minPartial] = `${sec}`.split(".");
   const seconds = `0.${minPartial}` * 60;
   return `${minutes}:${secondsFormatter.format(seconds)}`;

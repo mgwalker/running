@@ -1,15 +1,12 @@
 import { chart, csv, text } from "./util.js";
 import {
   fillHoles,
+  formatPace,
   getCumulative,
   getIndividual,
   getPace,
   getStats,
 } from "./run-data.js";
-
-const twoDecimalsFormatter = new Intl.NumberFormat("en-US", {
-  maximumFractionDigits: 2,
-});
 
 const root =
   "https://gist.githubusercontent.com/mgwalker/de505c85d9225b3a379d2b3bc9342486/raw/";
@@ -129,7 +126,7 @@ const main = async () => {
     ],
     tooltip: {
       label: (index) =>
-        ` ${twoDecimalsFormatter.format(p2021[index].value)} minutes per mile`,
+        ` ${formatPace(p2021[index].value)} per mile`,
       title: (index) => p2021[index].date,
     },
   });
