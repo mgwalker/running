@@ -9,91 +9,72 @@
         font-family: "Public Sans", sans-serif;
       }
 
-      #tooltip {
-        border: 2px solid black;
-        padding: 5px;
-        position: absolute;
-        background: lightblue;
-        visibility: hidden;
-        z-index: 10;
+      h2 {
+        margin: 0;
       }
 
-      #tooltip h2 {
-        margin-top: 0;
-        padding-top: 0;
+      #stats span {
+        font-weight: bolder;
       }
 
-      #container {
-        display: grid;
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100vw;
-        height: 100vh;
-        grid-template-columns: 50vw 50vw;
-        grid-template-rows: 50vh 50vh;
+      table {
+        border-spacing: 1em 0;
       }
 
-      #container > * {
-        padding: 5px;
-      }
-
-      #stats table {
-        margin: 0 auto;
-      }
-
-      #stats table th {
-        padding-right: 5px;
+      th {
+        font-weight: normal;
         text-align: right;
+        vertical-align: top;
+        white-space: nowrap;
+      }
+
+      td {
+        vertical-align: top;
+        white-space: nowrap;
       }
 
       canvas {
-        height: 90%;
-        width: 90%;
-
-      svg {
-        max-height: 45vh;
-        max-width: 45vw;
-      }
-
-      svg .grid-line g.tick line {
-        stroke-opacity: 0.1;
+        width: 100vw;
       }
     </style>
   </head>
   <body>
-    <div id="tooltip"><h2>hi</h2></div>
+    <h1>My running, 2021</h1>
+    <div id="stats">
+      <table>
+        <tr>
+          <th>Total distance</th>
+          <td>
+            <span id="stats-total-distance"></span>
+            (<span id="stats-total-runs"></span> runs)
+          </td>
+        </tr>
+        <tr>
+          <th>Average distance</th>
+          <td>
+            <span id="stats-average-distance"></span> per mile (<span
+              id="stats-average-pace"
+            ></span>
+            per mile)
+          </td>
+        </tr>
+        <tr>
+          <th>Total time</th>
+          <td><span id="stats-total-time"></span></td>
+        </tr>
+      </table>
+    </div>
 
-    <div id="container">
-      <div id="stats">
-        <table>
-          <tbody>
-            <tr>
-              <th>Total distance:</th>
-              <td id="stats-total-distance"></td>
-            </tr>
-            <tr>
-              <th>Total runs:</th>
-              <td id="stats-total-runs"></td>
-            </tr>
-            <tr>
-              <th>Total time:</th>
-              <td id="stats-total-time"></td>
-            </tr>
-            <tr>
-              <th>Average distance:</th>
-              <td id="stats-average-distance"></td>
-            </tr>
-            <tr>
-              <th>Average pace:</th>
-              <td id="stats-average-pace"></td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-      <div id="individual"><canvas></canvas></div>
-      <div id="cumulative"><canvas></canvas></div>
-      <div id="pace"><canvas></canvas></div>
+    <hr />
+
+    <div id="cumulative">
+      <h2>Cumulative miles run</h2>
+      <canvas></canvas>
+    </div>
+    <hr />
+    <div id="individual">
+      <h2>Individual runs of 2021</h2>
+      <canvas></canvas>
     </div>
 
     <script

@@ -6,38 +6,41 @@ import {
   getIndividual,
   getPace,
   getStats,
+  twoDecimalsFormatter,
 } from "./run-data.js";
 
 const root =
   "https://gist.githubusercontent.com/mgwalker/de505c85d9225b3a379d2b3bc9342486/raw/";
 
+const lastYear = 2020;
+const thisYear = 2021;
+
 const urls = {
-  y2020: `${root}2020.csv`,
-  y2021: `${root}2021.csv`,
+  lastYear: `${root}2020.csv`,
+  thisYear: `${root}2021.csv`,
 };
 
 const main = async () => {
-  const csv2021 = await csv(urls.y2021);
-  const csv2020 = (await csv(urls.y2020)).map((row) => ({
+  const csvThisYear = await csv(urls.thisYear);
+  const csvLastYear = (await csv(urls.lastYear)).map((row) => ({
     ...row,
-    date: row.date.replace(/^2020-/, "2021-"),
+    date: row.date.replace(new RegExp(`^${lastYear}-`, "i"), `${thisYear}-`),
   }));
 
-  fillHoles(csv2021);
-  fillHoles(csv2020);
+  fillHoles(csvThisYear);
+  fillHoles(csvLastYear);
 
-  const i2021 = getIndividual(csv2021);
-  const p2021 = getPace(csv2021);
+  const individual = getIndividual(csvThisYear);
+  const pace = getPace(csvThisYear);
+  const stats = getStats(csvThisYear);
 
-  const s2021 = getStats(csv2021);
-
-  let fromDate = luxon.DateTime.fromISO(csv2021[0].date);
-  let toDate = luxon.DateTime.fromISO(csv2020[0].date);
-  let dataSetToExtend = csv2020;
+  let fromDate = luxon.DateTime.fromISO(csvThisYear[0].date);
+  let toDate = luxon.DateTime.fromISO(csvLastYear[0].date);
+  let dataSetToExtend = csvLastYear;
   if (fromDate > toDate) {
-    fromDate = luxon.DateTime.fromISO(csv2020[0].date);
-    toDate = luxon.DateTime.fromISO(csv2021[0].date);
-    dataSetToExtend = csv2021;
+    fromDate = luxon.DateTime.fromISO(csvLastYear[0].date);
+    toDate = luxon.DateTime.fromISO(csvThisYear[0].date);
+    dataSetToExtend = csvThisYear;
   }
 
   while (toDate > fromDate) {
@@ -49,14 +52,14 @@ const main = async () => {
     });
   }
 
-  fromDate = luxon.DateTime.fromISO(csv2021.slice(-1)[0].date);
-  toDate = luxon.DateTime.fromISO(csv2020.slice(-1)[0].date);
-  dataSetToExtend = csv2021;
+  fromDate = luxon.DateTime.fromISO(csvThisYear.slice(-1)[0].date);
+  toDate = luxon.DateTime.fromISO(csvLastYear.slice(-1)[0].date);
+  dataSetToExtend = csvThisYear;
 
   if (fromDate > toDate) {
-    fromDate = luxon.DateTime.fromISO(csv2020.slice(-1)[0].date);
-    toDate = luxon.DateTime.fromISO(csv2021.slice(-1)[0].date);
-    dataSetToExtend = csv2020;
+    fromDate = luxon.DateTime.fromISO(csvLastYear.slice(-1)[0].date);
+    toDate = luxon.DateTime.fromISO(csvThisYear.slice(-1)[0].date);
+    dataSetToExtend = csvLastYear;
   }
 
   while (fromDate < toDate) {
@@ -68,8 +71,8 @@ const main = async () => {
     });
   }
 
-  const c2021 = getCumulative(csv2021);
-  const c2020 = getCumulative(csv2020);
+  const cumulativeThisYear = getCumulative(csvThisYear);
+  const cumulativeLastYear = getCumulative(csvLastYear);
 
   chart({
     id: "individual",
@@ -77,16 +80,31 @@ const main = async () => {
       {
         backgroundColor: "steelblue",
         borderColor: "steelblue",
-        borderWidth: 5,
-        data: i2021,
+        data: individual,
+        label: "distance (miles)",
+        type: "bar",
+      },
+      {
+        backgroundColor: "orange",
+        borderColor: "orange",
+        data: pace,
+        label: "pace (minutes per mile)",
+        type: "bubble",
       },
     ],
+    scales: { y: { display: false } },
     tooltip: {
-      label(index) {
-        return ` ${i2021[index].value} miles`;
+      label({ datasetIndex: ds, dataIndex: index }) {
+        return ds === 0
+          ? ` ${individual[index].value} miles (${formatPace(
+              pace[index].value
+            )} per mile)`
+          : ` ${formatPace(pace[index].value)} per mile (${
+              individual[index].value
+            } miles)`;
       },
-      title(index) {
-        return i2021[index].date;
+      title([{ dataIndex: index }]) {
+        return individual[index].date;
       },
     },
   });
@@ -96,46 +114,52 @@ const main = async () => {
     type: "line",
     datasets: [
       {
-        data: c2021,
+        data: cumulativeThisYear,
         backgroundColor: "rgba(55,124,34,0.3)",
         borderColor: "#377D22",
         borderWidth: 2,
         fill: "start",
+        label: thisYear,
+        pointHitRadius: 3,
         pointRadius: 0,
       },
       {
-        data: c2020,
+        data: cumulativeLastYear,
         backgroundColor: "rgba(74,4,0,0.3)",
         borderColor: "#4A 04 00",
         borderWidth: 2,
         fill: "start",
+        label: lastYear,
+        pointHitRadius: 3,
         pointRadius: 0,
       },
     ],
-  });
-
-  chart({
-    id: "pace",
-    datasets: [
-      {
-        backgroundColor: "orange",
-        borderColor: "orange",
-        borderWidth: 5,
-        data: p2021,
-      },
-    ],
+    scales: { y: { min: 0, position: "right" } },
     tooltip: {
-      label: (index) =>
-        ` ${formatPace(p2021[index].value)} per mile`,
-      title: (index) => p2021[index].date,
+      label({ datasetIndex: ds, dataIndex: index }) {
+        return ds === 0
+          ? `${twoDecimalsFormatter(
+              cumulativeThisYear[index].value
+            )} miles (${twoDecimalsFormatter(
+              cumulativeLastYear[index].value
+            )} miles in ${lastYear})`
+          : `${twoDecimalsFormatter(
+              cumulativeLastYear[index].value
+            )} miles (${twoDecimalsFormatter(
+              cumulativeThisYear[index].value
+            )} miles in ${thisYear})`;
+      },
+      title([{ dataIndex: index }]) {
+        return cumulativeThisYear[index].date;
+      },
     },
   });
 
-  text("#stats-total-distance", `${s2021.total} miles`);
-  text("#stats-total-runs", `${s2021.totalRuns}`);
-  text("#stats-total-time", `${s2021.totalTime}`);
-  text("#stats-average-distance", `${s2021.averageDistance} miles per run`);
-  text("#stats-average-pace", `${s2021.averagePace} per mile`);
+  text("#stats-total-distance", `${stats.total} miles`);
+  text("#stats-total-runs", `${stats.totalRuns}`);
+  text("#stats-total-time", `${stats.totalTime}`);
+  text("#stats-average-distance", `${stats.averageDistance} miles`);
+  text("#stats-average-pace", `${stats.averagePace}`);
 
   return;
 };

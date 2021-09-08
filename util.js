@@ -1,4 +1,4 @@
-export const chart = ({ id, tooltip, type = "bar", datasets }) => {
+export const chart = ({ id, tooltip, type = "bar", datasets, scales }) => {
   const ctx = document.querySelector(`#${id} canvas`).getContext("2d");
   new Chart(ctx, {
     type,
@@ -12,12 +12,12 @@ export const chart = ({ id, tooltip, type = "bar", datasets }) => {
     options: {
       animation: false,
       plugins: {
-        legend: { display: false },
+        legend: { display: true, position: "top", align: "start" },
         tooltip: tooltip
           ? {
               callbacks: {
-                label: ({ dataIndex }) => tooltip.label(dataIndex),
-                title: ([{ dataIndex }]) => tooltip.title(dataIndex),
+                label: tooltip.label,
+                title: tooltip.title,
               },
             }
           : { enabled: false },
@@ -27,9 +27,7 @@ export const chart = ({ id, tooltip, type = "bar", datasets }) => {
         x: {
           type: "time",
         },
-        y: {
-          min: 0,
-        },
+        ...(scales ?? { y: { min: 0 } }),
       },
     },
   });

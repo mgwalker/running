@@ -1,26 +1,33 @@
+const round = new Intl.NumberFormat("en-US", {
+  maximumFrationDigits: 0,
+  minimumIntegerDigits: 1,
+}).format;
+
+const secondsFormatter = new Intl.NumberFormat("en-US", {
+  maximumFractionDigits: 0,
+  minimumIntegerDigits: 2,
+}).format;
+
+export const twoDecimalsFormatter = new Intl.NumberFormat("en-US", {
+  maximumFractionDigits: 2,
+}).format;
+
+const s = (count) => (count === 1 ? "" : "s");
+
 export const formatPace = (sec) => {
   const [minutes, minPartial] = `${sec}`.split(".");
   const seconds = `0.${minPartial}` * 60;
-  return `${minutes}:${secondsFormatter.format(seconds)}`;
+  return `${minutes}:${secondsFormatter(seconds)}`;
 };
 
 const formatTime = (secs) => {
   const [hours, hourPartial] = `${secs / 3600}`.split(".");
   const [minutes, minPartial] = `${`0.${hourPartial}` * 60}`.split(".");
   const seconds = `0.${minPartial}` * 60;
-  return `${hours} hours, ${minutes} minutes, ${secondsFormatter.format(
-    seconds
-  )} seconds`;
+  return `${round(hours)} hour${s(hours)}, ${round(minutes)} minute${s(
+    minutes
+  )}, and ${round(seconds)} second${s(seconds)}`;
 };
-
-const secondsFormatter = new Intl.NumberFormat("en-US", {
-  maximumFractionDigits: 0,
-  minimumIntegerDigits: 2,
-});
-
-const twoDecimalsFormatter = new Intl.NumberFormat("en-US", {
-  maximumFractionDigits: 2,
-});
 
 const sum =
   (key = "distance") =>
@@ -66,7 +73,7 @@ export const getIndividual = (data) =>
 export const getPace = (data) =>
   data.map(({ date, distance, time }) => ({
     date,
-    value: twoDecimalsFormatter.format(time / distance / 60),
+    value: twoDecimalsFormatter(time / distance / 60),
   }));
 
 export const getStats = (data) => {
@@ -77,9 +84,7 @@ export const getStats = (data) => {
     totalTime: nonzero.reduce(sum("time"), 0),
   };
 
-  stats.averageDistance = twoDecimalsFormatter.format(
-    stats.total / stats.totalRuns
-  );
+  stats.averageDistance = twoDecimalsFormatter(stats.total / stats.totalRuns);
 
   stats.averagePace = formatPace(stats.totalTime / stats.total / 60);
   stats.totalTime = formatTime(stats.totalTime);
