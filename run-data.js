@@ -2,7 +2,7 @@ export const twoDecimalsFormatter = new Intl.NumberFormat("en-US", {
   maximumFractionDigits: 2,
 }).format;
 
-const s = (count) => (count === 1 ? "" : "s");
+const s = (count) => (+count === 1 ? "" : "s");
 
 export const formatPace = (duration) =>
   duration === null ? "" : duration.toFormat("m:s");
