@@ -74,6 +74,32 @@ const main = async () => {
   const cumulativeThisYear = getCumulative(csvThisYear);
   const cumulativeLastYear = getCumulative(csvLastYear);
 
+  const actualRuns = csvThisYear.filter(({ distance }) => distance > 0);
+  let actualRunNumber = 0;
+  let totalTimeCumulative = 0;
+
+  const avgPace = pace.map(({ date }, i) => {
+    if (pace[i].value !== null) {
+      const { value: cumulative } = cumulativeThisYear.find(
+        ({ date: cDate }) => cDate === date
+      );
+
+      const avgPace = {
+        date,
+        value: luxon.Duration.fromMillis(
+          (totalTimeCumulative += luxon.Duration.fromISOTime(
+            actualRuns[actualRunNumber].time
+          )) / cumulative
+        ),
+      };
+
+      actualRunNumber += 1;
+
+      return avgPace;
+    }
+    return { date, value: null };
+  }, 0);
+
   chart({
     id: "individual",
     datasets: [
@@ -94,17 +120,33 @@ const main = async () => {
         label: "pace (minutes per mile)",
         type: "bubble",
       },
+      {
+        backgroundColor: "saddlebrown",
+        borderColor: "saddlebrown",
+        data: avgPace.map(({ date, value }) => ({
+          date,
+          value: value?.as("minutes"),
+        })),
+        label: "average pace (minutes per mile)",
+        spanGaps: true,
+        type: "line",
+      },
     ],
     scales: { y: { display: false } },
     tooltip: {
       label({ datasetIndex: ds, dataIndex: index }) {
-        return ds === 0
-          ? ` ${individual[index].value} miles (${formatPace(
+        switch (ds) {
+          case 0:
+            return ` ${individual[index].value} miles (${formatPace(
               pace[index].value
-            )} per mile)`
-          : ` ${formatPace(pace[index].value)} per mile (${
+            )} per mile)`;
+          case 1:
+            return ` ${formatPace(pace[index].value)} per mile (${
               individual[index].value
             } miles)`;
+          case 2:
+            return ` average ${formatPace(avgPace[index].value)} per mile`;
+        }
       },
       title([{ dataIndex: index }]) {
         return individual[index].date;
