@@ -1,32 +1,17 @@
-const round = new Intl.NumberFormat("en-US", {
-  maximumFrationDigits: 0,
-  minimumIntegerDigits: 1,
-}).format;
-
-const secondsFormatter = new Intl.NumberFormat("en-US", {
-  maximumFractionDigits: 0,
-  minimumIntegerDigits: 2,
-}).format;
-
 export const twoDecimalsFormatter = new Intl.NumberFormat("en-US", {
   maximumFractionDigits: 2,
 }).format;
 
 const s = (count) => (count === 1 ? "" : "s");
 
-export const formatPace = (sec) => {
-  const [minutes, minPartial] = `${sec}`.split(".");
-  const seconds = `0.${minPartial}` * 60;
-  return `${minutes}:${secondsFormatter(seconds)}`;
-};
+export const formatPace = (duration) =>
+  duration === null ? "" : duration.toFormat("m:s");
 
 const formatTime = (secs) => {
-  const [hours, hourPartial] = `${secs / 3600}`.split(".");
-  const [minutes, minPartial] = `${`0.${hourPartial}` * 60}`.split(".");
-  const seconds = `0.${minPartial}` * 60;
-  return `${round(hours)} hour${s(hours)}, ${round(minutes)} minute${s(
+  const [hours, minutes, seconds] = secs.toFormat("h:m:s").split(":");
+  return `${hours} hour${s(hours)}, ${minutes} minute${s(
     minutes
-  )}, and ${round(seconds)} second${s(seconds)}`;
+  )}, and ${seconds} second${s(seconds)}`;
 };
 
 const sum =
@@ -73,7 +58,12 @@ export const getIndividual = (data) =>
 export const getPace = (data) =>
   data.map(({ date, distance, time }) => ({
     date,
-    value: twoDecimalsFormatter(time / distance / 60),
+    value:
+      distance === 0
+        ? null
+        : luxon.Duration.fromMillis(
+            luxon.Duration.fromISOTime(time) / distance
+          ),
   }));
 
 export const getStats = (data) => {
@@ -81,12 +71,19 @@ export const getStats = (data) => {
   const stats = {
     total: nonzero.reduce(sum(), 0),
     totalRuns: nonzero.length,
-    totalTime: nonzero.reduce(sum("time"), 0),
+    totalTime: luxon.Duration.fromMillis(
+      nonzero.reduce(
+        (sum, { time }) => luxon.Duration.fromISOTime(time) + sum,
+        0
+      )
+    ),
   };
 
   stats.averageDistance = twoDecimalsFormatter(stats.total / stats.totalRuns);
 
-  stats.averagePace = formatPace(stats.totalTime / stats.total / 60);
+  stats.averagePace = formatPace(
+    luxon.Duration.fromMillis(stats.totalTime / stats.total)
+  );
   stats.totalTime = formatTime(stats.totalTime);
 
   return stats;

@@ -87,7 +87,10 @@ const main = async () => {
       {
         backgroundColor: "orange",
         borderColor: "orange",
-        data: pace,
+        data: pace.map(({ date, value }) => ({
+          date,
+          value: value?.as("minutes"),
+        })),
         label: "pace (minutes per mile)",
         type: "bubble",
       },
