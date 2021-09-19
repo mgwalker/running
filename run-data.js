@@ -5,7 +5,7 @@ export const twoDecimalsFormatter = new Intl.NumberFormat("en-US", {
 const s = (count) => (+count === 1 ? "" : "s");
 
 export const formatPace = (duration) =>
-  duration === null ? "" : duration.toFormat("m:s");
+  duration === null ? "" : duration.toFormat("m:ss");
 
 const formatTime = (secs) => {
   const [hours, minutes, seconds] = secs.toFormat("h:m:s").split(":");
