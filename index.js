@@ -16,8 +16,8 @@ const lastYear = 2020;
 const thisYear = 2021;
 
 const urls = {
-  lastYear: `${root}2020.csv`,
-  thisYear: `${root}2021.csv`,
+  lastYear: `${root}${lastYear}.csv`,
+  thisYear: `${root}${thisYear}.csv`,
 };
 
 const main = async () => {
@@ -100,6 +100,21 @@ const main = async () => {
     return { date, value: null };
   }, 0);
 
+  actualRunNumber = 0;
+
+  const avgDistance = individual.map(({ date, value }, i) => {
+    if (value) {
+      actualRunNumber += 1;
+      return {
+        date,
+        value: twoDecimalsFormatter(
+          cumulativeThisYear[i].value / actualRunNumber
+        ),
+      };
+    }
+    return { date, value: null };
+  }, 0);
+
   chart({
     id: "individual",
     datasets: [
@@ -131,6 +146,14 @@ const main = async () => {
         spanGaps: true,
         type: "line",
       },
+      {
+        backgroundColor: "darkblue",
+        borderColor: "darkblue",
+        data: avgDistance,
+        label: "average distance per run (miles)",
+        spanGaps: true,
+        type: "line",
+      },
     ],
     scales: { y: { display: false } },
     tooltip: {
@@ -146,6 +169,8 @@ const main = async () => {
             } miles)`;
           case 2:
             return ` average ${formatPace(avgPace[index].value)} per mile`;
+          case 3:
+            return ` average ${avgDistance[index].value} miles per run`;
         }
       },
       title([{ dataIndex: index }]) {
