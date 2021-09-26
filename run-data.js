@@ -8,10 +8,17 @@ export const formatPace = (duration) =>
   duration === null ? "" : duration.toFormat("m:ss");
 
 const formatTime = (secs) => {
-  const [hours, minutes, seconds] = secs.toFormat("h:m:s").split(":");
-  return `${hours} hour${s(hours)}, ${minutes} minute${s(
-    minutes
-  )}, and ${seconds} second${s(seconds)}`;
+  if (secs > 100_000) {
+    const [days, hours, minutes, seconds] = secs.toFormat("d:h:m:s").split(":");
+    return `${days} day${s(days)}, ${hours} hour${s(
+      hours
+    )}, ${minutes} minute${s(minutes)}, and ${seconds} second${s(seconds)}`;
+  } else {
+    const [hours, minutes, seconds] = secs.toFormat("h:m:s").split(":");
+    return `${hours} hour${s(hours)}, ${minutes} minute${s(
+      minutes
+    )}, and ${seconds} second${s(seconds)}`;
+  }
 };
 
 const sum =
