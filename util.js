@@ -1,6 +1,6 @@
 export const chart = ({ id, tooltip, type = "bar", datasets, scales }) => {
   const ctx = document.querySelector(`#${id} canvas`).getContext("2d");
-  new Chart(ctx, {
+  return new Chart(ctx, {
     type,
     data: {
       labels: datasets[0].data.map(({ date }) => date),
@@ -59,8 +59,10 @@ export const csv = async (url) =>
     .then(({ data }) => data);
 
 export const text = (selector, txt) => {
-  const e = document.querySelector(selector);
+  const e = document.querySelectorAll(selector);
   if (e) {
-    e.innerText = txt;
+    Array.from(e).forEach((ee) => {
+      ee.innerText = txt;
+    });
   }
 };

@@ -12,30 +12,50 @@ import {
 const root =
   "https://gist.githubusercontent.com/mgwalker/de505c85d9225b3a379d2b3bc9342486/raw/";
 
-const lastYear = 2020;
-const thisYear = 2021;
-
-const urls = {
-  lastYear: `${root}${lastYear}.csv`,
-  thisYear: `${root}${thisYear}.csv`,
-};
+const charts = [];
 
 const main = async () => {
+  const hashConfig = window.location.hash
+    .replace(/^#/, "")
+    .split(";")
+    .map((v) => v.split("="))
+    .reduce((ob, [key, value]) => ({ ...ob, [key]: value }), {});
+
+  const thisYear = hashConfig.year ?? 2021;
+  const lastYear = thisYear - 1;
+  const hasLastYear = lastYear > 2018;
+
+  text(".year", thisYear);
+
+  const urls = {
+    lastYear: `${root}${lastYear}.csv`,
+    thisYear: `${root}${thisYear}.csv`,
+  };
+
   const csvThisYear = await csv(urls.thisYear);
-  const csvLastYear = (await csv(urls.lastYear)).map((row) => ({
-    ...row,
-    date: row.date.replace(new RegExp(`^${lastYear}-`, "i"), `${thisYear}-`),
-  }));
+  const csvLastYear = hasLastYear
+    ? (await csv(urls.lastYear)).map((row) => ({
+        ...row,
+        date: row.date.replace(
+          new RegExp(`^${lastYear}-`, "i"),
+          `${thisYear}-`
+        ),
+      }))
+    : [];
 
   fillHoles(csvThisYear);
-  fillHoles(csvLastYear);
+  if (hasLastYear) {
+    fillHoles(csvLastYear);
+  }
 
   const individual = getIndividual(csvThisYear);
   const pace = getPace(csvThisYear);
   const stats = getStats(csvThisYear);
 
   let fromDate = luxon.DateTime.fromISO(csvThisYear[0].date);
-  let toDate = luxon.DateTime.fromISO(csvLastYear[0].date);
+  let toDate = hasLastYear
+    ? luxon.DateTime.fromISO(csvLastYear[0].date)
+    : fromDate;
   let dataSetToExtend = csvLastYear;
   if (fromDate > toDate) {
     fromDate = luxon.DateTime.fromISO(csvLastYear[0].date);
@@ -53,7 +73,9 @@ const main = async () => {
   }
 
   fromDate = luxon.DateTime.fromISO(csvThisYear.slice(-1)[0].date);
-  toDate = luxon.DateTime.fromISO(csvLastYear.slice(-1)[0].date);
+  toDate = hasLastYear
+    ? luxon.DateTime.fromISO(csvLastYear.slice(-1)[0].date)
+    : fromDate;
   dataSetToExtend = csvThisYear;
 
   if (fromDate > toDate) {
@@ -115,115 +137,134 @@ const main = async () => {
     return { date, value: null };
   }, 0);
 
-  chart({
-    id: "individual",
-    datasets: [
-      {
-        backgroundColor: "steelblue",
-        borderColor: "steelblue",
-        data: individual,
-        label: "distance (miles)",
-        type: "bar",
-      },
-      {
-        backgroundColor: "orange",
-        borderColor: "orange",
-        data: pace.map(({ date, value }) => ({
-          date,
-          value: value?.as("minutes"),
-        })),
-        label: "pace (minutes per mile)",
-        type: "bubble",
-      },
-      {
-        backgroundColor: "saddlebrown",
-        borderColor: "saddlebrown",
-        data: avgPace.map(({ date, value }) => ({
-          date,
-          value: value?.as("minutes"),
-        })),
-        label: "average pace (minutes per mile)",
-        spanGaps: true,
-        type: "line",
-      },
-      {
-        backgroundColor: "darkblue",
-        borderColor: "darkblue",
-        data: avgDistance,
-        label: "average distance per run (miles)",
-        spanGaps: true,
-        type: "line",
-      },
-    ],
-    scales: { y: { display: false } },
-    tooltip: {
-      label({ datasetIndex: ds, dataIndex: index }) {
-        switch (ds) {
-          case 0:
-            return ` ${individual[index].value} miles (${formatPace(
-              pace[index].value
-            )} per mile)`;
-          case 1:
-            return ` ${formatPace(pace[index].value)} per mile (${
-              individual[index].value
-            } miles)`;
-          case 2:
-            return ` average ${formatPace(avgPace[index].value)} per mile`;
-          case 3:
-            return ` average ${avgDistance[index].value} miles per run`;
-        }
-      },
-      title([{ dataIndex: index }]) {
-        return individual[index].date;
-      },
+  const cumulativeDatasets = [
+    {
+      data: cumulativeThisYear,
+      backgroundColor: "rgba(55,124,34,0.3)",
+      borderColor: "#377D22",
+      borderWidth: 2,
+      fill: "start",
+      label: thisYear,
+      pointHitRadius: 3,
+      pointRadius: 0,
     },
+  ];
+
+  const tooltip = {
+    label({ dataIndex: index }) {
+      return `${twoDecimalsFormatter(cumulativeThisYear[index].value)} miles`;
+    },
+    title([{ dataIndex: index }]) {
+      return cumulativeThisYear[index].date;
+    },
+  };
+
+  if (hasLastYear) {
+    cumulativeDatasets.push({
+      data: cumulativeLastYear,
+      backgroundColor: "rgba(74,4,0,0.3)",
+      borderColor: "#4A 04 00",
+      borderWidth: 2,
+      fill: "start",
+      label: lastYear,
+      pointHitRadius: 3,
+      pointRadius: 0,
+    });
+
+    tooltip.label = ({ datasetIndex: ds, dataIndex: index }) => {
+      return ds === 0
+        ? `${twoDecimalsFormatter(
+            cumulativeThisYear[index].value
+          )} miles (${twoDecimalsFormatter(
+            cumulativeLastYear[index].value
+          )} miles in ${lastYear})`
+        : `${twoDecimalsFormatter(
+            cumulativeLastYear[index].value
+          )} miles (${twoDecimalsFormatter(
+            cumulativeThisYear[index].value
+          )} miles in ${thisYear})`;
+    };
+  }
+
+  charts.forEach((c) => {
+    c.destroy();
   });
 
-  chart({
-    id: "cumulative",
-    type: "line",
-    datasets: [
-      {
-        data: cumulativeThisYear,
-        backgroundColor: "rgba(55,124,34,0.3)",
-        borderColor: "#377D22",
-        borderWidth: 2,
-        fill: "start",
-        label: thisYear,
-        pointHitRadius: 3,
-        pointRadius: 0,
+  charts.push(
+    chart({
+      id: "cumulative",
+      type: "line",
+      datasets: cumulativeDatasets,
+      scales: { y: { min: 0, position: "right" } },
+      tooltip,
+    })
+  );
+
+  charts.push(
+    chart({
+      id: "individual",
+      datasets: [
+        {
+          backgroundColor: "steelblue",
+          borderColor: "steelblue",
+          data: individual,
+          label: "distance (miles)",
+          type: "bar",
+        },
+        {
+          backgroundColor: "orange",
+          borderColor: "orange",
+          data: pace.map(({ date, value }) => ({
+            date,
+            value: value?.as("minutes"),
+          })),
+          label: "pace (minutes per mile)",
+          type: "bubble",
+        },
+        {
+          backgroundColor: "saddlebrown",
+          borderColor: "saddlebrown",
+          data: avgPace.map(({ date, value }) => ({
+            date,
+            value: value?.as("minutes"),
+          })),
+          label: "average pace (minutes per mile)",
+          spanGaps: true,
+          type: "line",
+        },
+        {
+          backgroundColor: "darkblue",
+          borderColor: "darkblue",
+          data: avgDistance,
+          label: "average distance per run (miles)",
+          spanGaps: true,
+          type: "line",
+        },
+      ],
+      scales: { y: { display: false } },
+      tooltip: {
+        label({ datasetIndex: ds, dataIndex: index }) {
+          switch (ds) {
+            case 0:
+              return ` ${individual[index].value} miles (${formatPace(
+                pace[index].value
+              )} per mile)`;
+            case 1:
+              return ` ${formatPace(pace[index].value)} per mile (${
+                individual[index].value
+              } miles)`;
+            case 2:
+              return ` average ${formatPace(avgPace[index].value)} per mile`;
+            case 3:
+              return ` average ${avgDistance[index].value} miles per run`;
+          }
+        },
+        title([{ dataIndex: index }]) {
+          return individual[index].date;
+        },
       },
-      {
-        data: cumulativeLastYear,
-        backgroundColor: "rgba(74,4,0,0.3)",
-        borderColor: "#4A 04 00",
-        borderWidth: 2,
-        fill: "start",
-        label: lastYear,
-        pointHitRadius: 3,
-        pointRadius: 0,
-      },
-    ],
-    scales: { y: { min: 0, position: "right" } },
-    tooltip: {
-      label({ datasetIndex: ds, dataIndex: index }) {
-        return ds === 0
-          ? `${twoDecimalsFormatter(
-              cumulativeThisYear[index].value
-            )} miles (${twoDecimalsFormatter(
-              cumulativeLastYear[index].value
-            )} miles in ${lastYear})`
-          : `${twoDecimalsFormatter(
-              cumulativeLastYear[index].value
-            )} miles (${twoDecimalsFormatter(
-              cumulativeThisYear[index].value
-            )} miles in ${thisYear})`;
-      },
-      title([{ dataIndex: index }]) {
-        return cumulativeThisYear[index].date;
-      },
-    },
-  });
+    })
+  );
 
   text("#stats-total-distance", `${stats.total} miles`);
   text("#stats-total-runs", `${stats.totalRuns}`);
@@ -235,3 +276,6 @@ const main = async () => {
 };
 
 main();
+window.addEventListener("hashchange", () => {
+  main();
+});
