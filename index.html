@@ -10,7 +10,11 @@
       }
 
       h2 {
-        margin: 0;
+        margin: 0 0 0.5em 0;
+      }
+
+      hr {
+        margin: 1.5em 0;
       }
 
       #stats span {
@@ -35,6 +39,34 @@
 
       canvas {
         width: 100vw;
+      }
+
+      #monthly-stats table {
+        border-spacing: 0;
+      }
+
+      #monthly-stats table th {
+        font-weight: bold;
+      }
+
+      #monthly-stats table th,
+      #monthly-stats table td {
+        padding: 0 1em;
+      }
+
+      #monthly-stats table thead {
+        background: steelblue;
+        color: white;
+      }
+
+      #monthly-stats table tbody th,
+      #monthly-stats table tbody td {
+        padding-bottom: 0.3em;
+        padding-top: 0.3em;
+      }
+
+      #monthly-stats table tbody tr:nth-child(even) {
+        background: #eee;
       }
     </style>
   </head>
@@ -75,6 +107,13 @@
     <div id="individual">
       <h2>Individual runs of <span class="year"></span></h2>
       <canvas></canvas>
+    </div>
+
+    <hr />
+
+    <div id="monthly-stats">
+      <h2>Monthly stats for <span class="year"></span></h2>
+      <table></table>
     </div>
 
     <script

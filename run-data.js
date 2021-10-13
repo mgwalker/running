@@ -2,7 +2,7 @@ export const twoDecimalsFormatter = new Intl.NumberFormat("en-US", {
   maximumFractionDigits: 2,
 }).format;
 
-const s = (count) => (+count === 1 ? "" : "s");
+export const s = (count) => (+count === 1 ? "" : "s");
 
 export const formatPace = (duration) =>
   duration === null ? "" : duration.toFormat("m:ss");
@@ -91,6 +91,7 @@ export const getStats = (data) => {
   stats.averagePace = formatPace(
     luxon.Duration.fromMillis(stats.totalTime / stats.total)
   );
+  stats.total = twoDecimalsFormatter(stats.total);
   stats.totalTime = formatTime(stats.totalTime);
 
   return stats;

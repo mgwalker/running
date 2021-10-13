@@ -8,6 +8,7 @@ import {
   getStats,
   twoDecimalsFormatter,
 } from "./run-data.js";
+import populateTable from "./table.js";
 
 const root =
   "https://gist.githubusercontent.com/mgwalker/de505c85d9225b3a379d2b3bc9342486/raw/";
@@ -271,6 +272,8 @@ const main = async () => {
   text("#stats-total-time", `${stats.totalTime}`);
   text("#stats-average-distance", `${stats.averageDistance} miles`);
   text("#stats-average-pace", `${stats.averagePace}`);
+
+  populateTable(csvThisYear);
 
   return;
 };
