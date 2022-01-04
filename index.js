@@ -22,7 +22,7 @@ const main = async () => {
     .map((v) => v.split("="))
     .reduce((ob, [key, value]) => ({ ...ob, [key]: value }), {});
 
-  const thisYear = hashConfig.year ?? 2021;
+  const thisYear = hashConfig.year ?? 2022;
   const lastYear = thisYear - 1;
   const hasLastYear = lastYear > 2018;
 
