@@ -26,6 +26,7 @@ const main = async () => {
   const lastYear = thisYear - 1;
   const hasLastYear = lastYear > 2018;
 
+  text("title", `My runs, ${thisYear}`);
   text(".year", thisYear);
 
   const urls = {
@@ -272,6 +273,7 @@ const main = async () => {
   text("#stats-total-time", `${stats.totalTime}`);
   text("#stats-average-distance", `${stats.averageDistance} miles`);
   text("#stats-average-pace", `${stats.averagePace}`);
+  text("#stats-miles-per-day", `${stats.milesPerDay} miles`);
 
   populateTable(csvThisYear);
 
