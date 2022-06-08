@@ -10,12 +10,21 @@ import {
 } from "./run-data.js";
 import populateTable from "./table.js";
 
+const CONVERSIONS = new Map([["kilometers", 1.609344]]);
+const UNITS = new Map([
+  ["miles", "miles"],
+  ["kilometers", "km"],
+]);
+
 const root =
   "https://gist.githubusercontent.com/mgwalker/de505c85d9225b3a379d2b3bc9342486/raw/";
 
 const charts = [];
 
-const main = async () => {
+const main = async (unit = "miles") => {
+  const scale = CONVERSIONS.get(unit) ?? 1;
+  const units = UNITS.get(unit) ?? 'miles'
+
   const hashConfig = window.location.hash
     .replace(/^#/, "")
     .split(";")
@@ -34,7 +43,10 @@ const main = async () => {
     thisYear: `${root}${thisYear}.csv`,
   };
 
-  const csvThisYear = await csv(urls.thisYear);
+  const csvThisYear = (await csv(urls.thisYear)).map((row) => ({
+    ...row,
+    distance: row.distance * scale,
+  }));
   const csvLastYear = hasLastYear
     ? (await csv(urls.lastYear)).map((row) => ({
         ...row,
@@ -42,6 +54,7 @@ const main = async () => {
           new RegExp(`^${lastYear}-`, "i"),
           `${thisYear}-`
         ),
+        distance: row.distance * scale,
       }))
     : [];
 
@@ -154,7 +167,7 @@ const main = async () => {
 
   const tooltip = {
     label({ dataIndex: index }) {
-      return `${twoDecimalsFormatter(cumulativeThisYear[index].value)} miles`;
+      return `${twoDecimalsFormatter(cumulativeThisYear[index].value)} ${units}`;
     },
     title([{ dataIndex: index }]) {
       return cumulativeThisYear[index].date;
@@ -177,14 +190,14 @@ const main = async () => {
       return ds === 0
         ? `${twoDecimalsFormatter(
             cumulativeThisYear[index].value
-          )} miles (${twoDecimalsFormatter(
+          )} ${units} (${twoDecimalsFormatter(
             cumulativeLastYear[index].value
-          )} miles in ${lastYear})`
+          )} ${units} in ${lastYear})`
         : `${twoDecimalsFormatter(
             cumulativeLastYear[index].value
-          )} miles (${twoDecimalsFormatter(
+          )} ${units} (${twoDecimalsFormatter(
             cumulativeThisYear[index].value
-          )} miles in ${thisYear})`;
+          )} ${units} in ${thisYear})`;
     };
   }
 
@@ -210,7 +223,7 @@ const main = async () => {
           backgroundColor: "steelblue",
           borderColor: "steelblue",
           data: individual,
-          label: "distance (miles)",
+          label: `distance (${units})`,
           type: "bar",
         },
         {
@@ -220,7 +233,7 @@ const main = async () => {
             date,
             value: value?.as("minutes"),
           })),
-          label: "pace (minutes per mile)",
+          label: `pace (minutes per ${units})`,
           type: "bubble",
         },
         {
@@ -230,7 +243,7 @@ const main = async () => {
             date,
             value: value?.as("minutes"),
           })),
-          label: "average pace (minutes per mile)",
+          label: `average pace (minutes per ${units})`,
           spanGaps: true,
           type: "line",
         },
@@ -238,7 +251,7 @@ const main = async () => {
           backgroundColor: "darkblue",
           borderColor: "darkblue",
           data: avgDistance,
-          label: "average distance per run (miles)",
+          label: `average distance per run (${units})`,
           spanGaps: true,
           type: "line",
         },
@@ -248,17 +261,17 @@ const main = async () => {
         label({ datasetIndex: ds, dataIndex: index }) {
           switch (ds) {
             case 0:
-              return ` ${individual[index].value} miles (${formatPace(
+              return ` ${individual[index].value} ${units} (${formatPace(
                 pace[index].value
-              )} per mile)`;
+              )} per ${units})`;
             case 1:
-              return ` ${formatPace(pace[index].value)} per mile (${
+              return ` ${formatPace(pace[index].value)} per ${units} (${
                 individual[index].value
-              } miles)`;
+              } ${units})`;
             case 2:
-              return ` average ${formatPace(avgPace[index].value)} per mile`;
+              return ` average ${formatPace(avgPace[index].value)} per ${units}`;
             case 3:
-              return ` average ${avgDistance[index].value} miles per run`;
+              return ` average ${avgDistance[index].value} ${units} per run`;
           }
         },
         title([{ dataIndex: index }]) {
@@ -268,14 +281,14 @@ const main = async () => {
     })
   );
 
-  text("#stats-total-distance", `${stats.total} miles`);
+  text("#stats-total-distance", `${stats.total} ${units}`);
   text("#stats-total-runs", `${stats.totalRuns}`);
   text("#stats-total-time", `${stats.totalTime}`);
-  text("#stats-average-distance", `${stats.averageDistance} miles`);
+  text("#stats-average-distance", `${stats.averageDistance} ${units}`);
   text("#stats-average-pace", `${stats.averagePace}`);
-  text("#stats-miles-per-day", `${stats.milesPerDay} miles`);
+  text("#stats-miles-per-day", `${stats.milesPerDay} ${units}`);
 
-  populateTable(csvThisYear);
+  populateTable(csvThisYear, units);
 
   return;
 };
@@ -283,4 +296,8 @@ const main = async () => {
 main();
 window.addEventListener("hashchange", () => {
   main();
+});
+
+document.getElementById("units").addEventListener("change", () => {
+  main(document.getElementById("units").value);
 });

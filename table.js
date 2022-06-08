@@ -1,6 +1,6 @@
 import { s, twoDecimalsFormatter } from "./run-data.js";
 
-export default (data) => {
+export default (data,units) => {
   const months = new Map();
 
   data.forEach((run) => {
@@ -35,16 +35,12 @@ export default (data) => {
     rows.push(`
       <th>${month}</th>
       <td>${count}</td>
-      <td>${twoDecimalsFormatter(reduced.distance)} mile${s(
-      reduced.distance
-    )}</td>
-      <td>${twoDecimalsFormatter(averageDistance)} mile${s(
-      averageDistance
-    )}</td>
+      <td>${twoDecimalsFormatter(reduced.distance)} ${units}</td>
+      <td>${twoDecimalsFormatter(averageDistance)} ${units}</td>
       <td>${luxon.Duration.fromMillis(reduced.time).toFormat("hh:mm:ss")}</td>
       <td>${luxon.Duration.fromMillis(reduced.time / reduced.distance).toFormat(
         "mm:ss"
-      )} per mile</td>
+      )} per ${units}</td>
 `);
   });
 
