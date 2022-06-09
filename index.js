@@ -39,8 +39,8 @@ const main = async (unit = "miles") => {
   text(".year", thisYear);
 
   const urls = {
-    lastYear: `${root}${lastYear}.csv`,
-    thisYear: `${root}${thisYear}.csv`,
+    lastYear: `${root}${lastYear}.csv?${Math.random()}`,
+    thisYear: `${root}${thisYear}.csv?${Math.random()}`,
   };
 
   const csvThisYear = (await csv(urls.thisYear)).map((row) => ({
