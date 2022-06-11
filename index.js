@@ -23,7 +23,7 @@ const charts = [];
 
 const main = async (unit = "miles") => {
   const scale = CONVERSIONS.get(unit) ?? 1;
-  const units = UNITS.get(unit) ?? 'miles'
+  const units = UNITS.get(unit) ?? "miles";
 
   const hashConfig = window.location.hash
     .replace(/^#/, "")
@@ -165,9 +165,40 @@ const main = async (unit = "miles") => {
     },
   ];
 
+  fromDate = luxon.DateTime.fromISO(csvThisYear[0].date);
+  toDate = hasLastYear
+    ? luxon.DateTime.fromISO(csvLastYear.slice(-1)[0].date)
+    : fromDate;
+
+  const projected = {
+    data: [],
+    backgroundColor: "rgba(0,0,0,0)",
+    borderColor: "blue",
+    borderWidth: 2,
+    borderDash: [5, 10],
+    pointHitRadius: 3,
+    pointRadius: 0,
+    label: `projected (${thisYear})`,
+  };
+
+  let projectedTotal = +stats.milesPerDay;
+  while (fromDate <= toDate) {
+    projected.data.push({ date: fromDate.toISODate(), value: projectedTotal });
+
+    fromDate = fromDate.plus({ days: 1 });
+    projectedTotal += +stats.milesPerDay;
+  }
+  cumulativeDatasets.push(projected);
+
   const tooltip = {
-    label({ dataIndex: index }) {
-      return `${twoDecimalsFormatter(cumulativeThisYear[index].value)} ${units}`;
+    label({ datasetIndex: ds, dataIndex: index }) {
+      if (ds === 0) {
+        return `${twoDecimalsFormatter(
+          cumulativeThisYear[index].value
+        )} ${units}`;
+      } else if (ds === 1) {
+        return twoDecimalsFormatter(cumulativeDatasets[ds].data[index].value);
+      }
     },
     title([{ dataIndex: index }]) {
       return cumulativeThisYear[index].date;
@@ -187,23 +218,28 @@ const main = async (unit = "miles") => {
     });
 
     tooltip.label = ({ datasetIndex: ds, dataIndex: index }) => {
-      return ds === 0
-        ? `${twoDecimalsFormatter(
-            cumulativeThisYear[index].value
-          )} ${units} (${twoDecimalsFormatter(
-            cumulativeLastYear[index].value
-          )} ${units} in ${lastYear})`
-        : `${twoDecimalsFormatter(
-            cumulativeLastYear[index].value
-          )} ${units} (${twoDecimalsFormatter(
-            cumulativeThisYear[index].value
-          )} ${units} in ${thisYear})`;
+      if (ds === 0) {
+        return `${twoDecimalsFormatter(
+          cumulativeThisYear[index].value
+        )} ${units} (${twoDecimalsFormatter(
+          cumulativeLastYear[index].value
+        )} ${units} in ${lastYear})`;
+      } else if (ds === 1) {
+        return twoDecimalsFormatter(cumulativeDatasets[ds].data[index].value);
+      } else if (ds === 2) {
+        return `${twoDecimalsFormatter(
+          cumulativeLastYear[index].value
+        )} ${units} (${twoDecimalsFormatter(
+          cumulativeThisYear[index].value
+        )} ${units} in ${thisYear})`;
+      }
     };
   }
 
   charts.forEach((c) => {
     c.destroy();
   });
+  charts.length = 0;
 
   charts.push(
     chart({
@@ -269,7 +305,9 @@ const main = async (unit = "miles") => {
                 individual[index].value
               } ${units})`;
             case 2:
-              return ` average ${formatPace(avgPace[index].value)} per ${units}`;
+              return ` average ${formatPace(
+                avgPace[index].value
+              )} per ${units}`;
             case 3:
               return ` average ${avgDistance[index].value} ${units} per run`;
           }
