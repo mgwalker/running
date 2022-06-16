@@ -31,7 +31,7 @@ const main = async (unit = "miles") => {
     .map((v) => v.split("="))
     .reduce((ob, [key, value]) => ({ ...ob, [key]: value }), {});
 
-  const thisYear = hashConfig.year ?? 2022;
+  const thisYear = hashConfig.year ?? `{new Date().getFullYear()}`;
   const lastYear = thisYear - 1;
   const hasLastYear = lastYear > 2018;
 
@@ -165,30 +165,32 @@ const main = async (unit = "miles") => {
     },
   ];
 
-  fromDate = luxon.DateTime.fromISO(csvThisYear[0].date);
-  toDate = hasLastYear
-    ? luxon.DateTime.fromISO(csvLastYear.slice(-1)[0].date)
-    : fromDate;
+  if(thisYear === new Date().getFullYear()) {
+    fromDate = luxon.DateTime.fromISO(`${thisYear}-01-01`);
+    toDate = hasLastYear
+      ? luxon.DateTime.fromISO(csvLastYear.slice(-1)[0].date)
+      : fromDate;
 
-  const projected = {
-    data: [],
-    backgroundColor: "rgba(0,0,0,0)",
-    borderColor: "blue",
-    borderWidth: 2,
-    borderDash: [5, 10],
-    pointHitRadius: 3,
-    pointRadius: 0,
-    label: `projected (${thisYear})`,
-  };
+    const projected = {
+      data: [],
+      backgroundColor: "rgba(0,0,0,0)",
+      borderColor: "blue",
+      borderWidth: 2,
+      borderDash: [5, 10],
+      pointHitRadius: 3,
+      pointRadius: 0,
+      label: `projected (${thisYear})`,
+    };
 
-  let projectedTotal = +stats.milesPerDay;
-  while (fromDate <= toDate) {
-    projected.data.push({ date: fromDate.toISODate(), value: projectedTotal });
+    let projectedTotal = +stats.milesPerDay;
+    while (fromDate <= toDate) {
+      projected.data.push({ date: fromDate.toISODate(), value: projectedTotal });
 
-    fromDate = fromDate.plus({ days: 1 });
-    projectedTotal += +stats.milesPerDay;
+      fromDate = fromDate.plus({ days: 1 });
+      projectedTotal += +stats.milesPerDay;
+    }
+    cumulativeDatasets.push(projected);
   }
-  cumulativeDatasets.push(projected);
 
   const tooltip = {
     label({ datasetIndex: ds, dataIndex: index }) {
