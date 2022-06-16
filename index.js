@@ -31,7 +31,7 @@ const main = async (unit = "miles") => {
     .map((v) => v.split("="))
     .reduce((ob, [key, value]) => ({ ...ob, [key]: value }), {});
 
-  const thisYear = hashConfig.year ?? `${new Date().getFullYear()}`;
+  const thisYear = +hashConfig.year ?? new Date().getFullYear();
   const lastYear = thisYear - 1;
   const hasLastYear = lastYear > 2018;
 
